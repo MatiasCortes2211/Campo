@@ -1,0 +1,141 @@
+.badge-propio { background: var(--color-acento-claro); color: var(--color-acento); }
+
+.badge-actual {
+  background: var(--color-acento);
+  color: white;
+}
+
+.seccion {
+  margin-bottom: 2rem;
+}
+
+.seccion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.seccion h2 {
+  font-size: 1.05rem;
+  margin: 0 0 0.75rem;
+}
+
+.seccion-header h2 {
+  margin: 0;
+}
+
+.tabla-stock {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.tabla-stock th, .tabla-stock td {
+  text-align: left;
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid var(--color-borde);
+  font-size: 0.92rem;
+}
+
+.tabla-stock th {
+  color: var(--color-texto-mutado);
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.tabla-referencia {
+  margin-bottom: 1rem;
+}
+
+.boton-link {
+  background: none;
+  border: none;
+  color: var(--color-acento);
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.boton-link-peligro {
+  color: var(--color-alerta);
+}
+
+.lista-historial {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.lista-historial li {
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 10px;
+  padding: 0.7rem 0.9rem;
+}
+
+.periodo-actual {
+  border-color: var(--color-acento) !important;
+}
+
+.evento-anulado {
+  opacity: 0.55;
+  text-decoration: line-through;
+}
+
+.evento-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.evento-fecha {
+  color: var(--color-texto-mutado);
+}
+
+.evento-tipo {
+  font-weight: 700;
+}
+
+.boton-anular {
+  margin-left: auto;
+  background: none;
+  border: 1px solid var(--color-alerta);
+  color: var(--color-alerta);
+  border-radius: 6px;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+.evento-lineas {
+  margin-top: 0.4rem;
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  font-size: 0.9rem;
+}
+
+.evento-linea {
+  background: var(--color-acento-claro);
+  color: var(--color-acento);
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+}
+
+.evento-comentario {
+  margin: 0.4rem 0 0;
+  font-size: 0.85rem;
+  color: var(--color-texto-mutado);
+  font-style: italic;
+}

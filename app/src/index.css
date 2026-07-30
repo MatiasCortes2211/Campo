@@ -1,0 +1,137 @@
+:root {
+  --color-fondo: #f6f4ee;
+  --color-superficie: #ffffff;
+  --color-texto: #2b2b23;
+  --color-texto-mutado: #6f6a5c;
+  --color-borde: #ded8c6;
+  --color-acento: #4a5d3a;
+  --color-acento-claro: #e4ead9;
+  --color-alerta: #a4462f;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  color: var(--color-texto);
+  background-color: var(--color-fondo);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input, select, textarea {
+  font-family: inherit;
+  font-size: 1rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--color-borde);
+  border-radius: 6px;
+  background: var(--color-superficie);
+  color: var(--color-texto);
+}
+
+a {
+  color: inherit;
+}
+
+.pantalla {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 4rem;
+}
+
+.encabezado, .encabezado-detalle {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+}
+
+.encabezado h1, .encabezado-detalle h1 {
+  font-size: 1.6rem;
+  margin: 0 0 0.25rem;
+}
+
+.texto-mutado {
+  color: var(--color-texto-mutado);
+  font-size: 0.9rem;
+}
+
+.boton {
+  display: inline-block;
+  padding: 0.55rem 1rem;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.boton-primario {
+  background: var(--color-acento);
+  color: white;
+}
+
+.boton-secundario {
+  background: var(--color-acento-claro);
+  color: var(--color-acento);
+}
+
+.volver {
+  display: inline-block;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  color: var(--color-texto-mutado);
+  text-decoration: none;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  background: var(--color-acento-claro);
+  color: var(--color-acento);
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-alquilado {
+  background: #f4e3d3;
+  color: var(--color-alerta);
+}
+
+.badge-correccion {
+  background: #e6e0f0;
+  color: #5a4a8a;
+}
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 420px;
+}
+
+.formulario label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-texto-mutado);
+}
+
+.vacio {
+  text-align: center;
+  padding: 3rem 1rem;
+  border: 1px dashed var(--color-borde);
+  border-radius: 12px;
+}

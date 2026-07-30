@@ -1,0 +1,94 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(43, 43, 35, 0.45);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 50;
+}
+
+@media (min-width: 640px) {
+  .overlay {
+    align-items: center;
+  }
+}
+
+.modal-evento {
+  background: var(--color-superficie);
+  width: 100%;
+  max-width: 480px;
+  border-radius: 16px 16px 0 0;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+@media (min-width: 640px) {
+  .modal-evento {
+    border-radius: 16px;
+  }
+}
+
+.modal-evento h2 {
+  margin: 0;
+}
+
+.modal-evento label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-texto-mutado);
+}
+
+.fila-linea {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+
+.fila-linea select {
+  flex: 1;
+}
+
+.fila-linea input {
+  width: 90px;
+}
+
+.boton-quitar {
+  background: none;
+  border: none;
+  color: var(--color-alerta);
+  font-size: 1rem;
+}
+
+.acciones-modal {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+.fila-fechas {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.fila-fechas label {
+  flex: 1;
+}
+
+.mensaje-error {
+  background: #fbe9e4;
+  color: var(--color-alerta);
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.85rem;
+  margin: 0;
+}

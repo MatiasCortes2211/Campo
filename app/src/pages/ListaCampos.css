@@ -1,0 +1,38 @@
+.lista-campos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.card-campo {
+  display: block;
+  padding: 1rem 1.1rem;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 12px;
+  text-decoration: none;
+  color: var(--color-texto);
+  transition: border-color 0.15s ease;
+}
+
+.card-campo:hover {
+  border-color: var(--color-acento);
+}
+
+.card-campo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-campo-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.total-cabezas {
+  margin: 0.4rem 0 0;
+  font-weight: 700;
+  color: var(--color-acento);
+}

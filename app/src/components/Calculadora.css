@@ -1,0 +1,35 @@
+.calculadora {
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+}
+
+.calculadora h3 {
+  margin: 0 0 0.7rem;
+  font-size: 0.95rem;
+}
+
+.calculadora-inputs {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.calculadora-inputs label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--color-texto-mutado);
+  font-weight: 600;
+}
+
+.calculadora-inputs input {
+  width: 110px;
+}
+
+.calculadora-resultado {
+  margin: 0.8rem 0 0;
+  font-size: 0.95rem;
+}
