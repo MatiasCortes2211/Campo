@@ -1,0 +1,131 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum TipoOcupante {
+  propio
+  alquilado
+}
+
+enum Categoria {
+  Ternero
+  Ternera
+  Novillo
+  Vaquillona
+  Vaca
+  Toro
+}
+
+enum TipoEvento {
+  nacimiento
+  muerte
+  compra
+  venta
+  recategorizacion
+  ajuste
+}
+
+enum EstadoEvento {
+  activo
+  anulado
+}
+
+model GrupoDeTrabajo {
+  id        String     @id @default(cuid())
+  nombre    String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  usuarios  Usuario[]
+  campos    Campo[]
+}
+
+model Usuario {
+  id        String         @id @default(cuid())
+  nombre    String
+  email     String         @unique
+  grupoId   String
+  grupo     GrupoDeTrabajo @relation(fields: [grupoId], references: [id])
+  createdAt DateTime       @default(now())
+}
+
+model Campo {
+  id        String   @id @default(cuid())
+  grupoId   String
+  grupo     GrupoDeTrabajo @relation(fields: [grupoId], references: [id])
+  nombre    String
+  ubicacion String
+  hectareas Float
+  renspa    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ocupantes Ocupante[]
+  stock     Stock[]
+  eventos   Evento[]
+
+  @@index([grupoId])
+}
+
+model Ocupante {
+  id          String       @id @default(cuid())
+  campoId     String
+  campo       Campo        @relation(fields: [campoId], references: [id])
+  tipo        TipoOcupante
+  nombre      String
+  contacto    String?
+  cuit        String?
+  // Se guardan como fecha pura YYYY-MM-DD (String), no DateTime, para
+  // evitar exactamente el bug de timezone que ya resolvimos del lado
+  // del cliente: no queremos que Postgres/Prisma interprete horas.
+  fechaInicio String
+  fechaFin    String?
+  comentario  String?
+  updatedAt   DateTime     @updatedAt
+
+  @@index([campoId])
+}
+
+model Stock {
+  id          String     @id // `${campoId}:${categoria}`
+  campoId     String
+  campo       Campo      @relation(fields: [campoId], references: [id])
+  categoria   Categoria
+  cantidadActual Int
+  precioKg    Float?
+  precioFecha DateTime?
+  updatedAt   DateTime   @updatedAt
+
+  @@index([campoId])
+}
+
+model Evento {
+  id              String        @id @default(cuid())
+  campoId         String
+  campo           Campo         @relation(fields: [campoId], references: [id])
+  tipo            TipoEvento
+  fecha           String
+  comentario      String?
+  estado          EstadoEvento  @default(activo)
+  eventoCorrigeId String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  detalles        EventoDetalle[]
+
+  @@index([campoId])
+}
+
+model EventoDetalle {
+  id               String     @id @default(cuid())
+  eventoId         String
+  evento           Evento     @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+  categoriaOrigen  Categoria
+  cantidad         Int
+  categoriaDestino Categoria?
+
+  @@index([eventoId])
+}

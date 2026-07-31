@@ -38,7 +38,12 @@ export async function sincronizar(grupoId: string): Promise<ResultadoSync> {
 }
 
 async function push(grupoId: string) {
-  const campos = await db.campos.where({ grupoId, sincronizado: false }).toArray();
+  // Los Campos son una tabla chica (pocas filas por grupo) — se mandan
+  // siempre completos, igual que el Stock. Esto garantiza que cualquier
+  // Ocupante/Stock/Evento que dependa de un campoId nunca choque contra
+  // una foreign key, sin importar si ese Campo ya se había marcado como
+  // sincronizado en una corrida anterior.
+  const campos = await db.campos.where("grupoId").equals(grupoId).toArray();
   const campoIds = (await db.campos.where("grupoId").equals(grupoId).toArray()).map((c) => c.id);
 
   const ocupantes = await db.ocupantes
