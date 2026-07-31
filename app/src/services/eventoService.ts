@@ -131,7 +131,7 @@ export async function anularEvento(eventoId: string): Promise<void> {
   const detalles = await db.eventoDetalles.where("eventoId").equals(eventoId).toArray();
 
   await db.transaction("rw", db.eventos, db.stock, async () => {
-    await db.eventos.update(eventoId, { estado: "anulado" });
+    await db.eventos.update(eventoId, { estado: "anulado", sincronizado: false });
 
     for (const linea of detalles) {
       const deltas = calcularDeltas(evento.tipo, {
