@@ -1,45 +1,26 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import type { Campo, Stock } from "../types/domain";
 import { listarCamposDeGrupo, obtenerStockDeCampo } from "../services/campoService";
-import { asegurarGrupoPorDefecto, GRUPO_POR_DEFECTO_ID } from "../db/seed";
-import "./ListaCampos.css";
+import { getUsuarioActual, logout } from "../services/authService";
 import { sincronizar } from "../services/syncService";
+import "./ListaCampos.css";
 
 interface CampoConResumen extends Campo {
   totalCabezas: number;
 }
 
 export default function ListaCampos() {
+  const navigate = useNavigate();
+  const usuario = getUsuarioActual();
   const [campos, setCampos] = useState<CampoConResumen[]>([]);
   const [cargando, setCargando] = useState(true);
-
-  useEffect(() => {
-    (async () => {
-      await asegurarGrupoPorDefecto();
-      const lista = await listarCamposDeGrupo(GRUPO_POR_DEFECTO_ID);
-      const conResumen = await Promise.all(
-        lista.map(async (campo) => {
-          const stock: Stock[] = await obtenerStockDeCampo(campo.id);
-          const total = stock.reduce((acc, s) => acc + s.cantidadActual, 0);
-          return { ...campo, totalCabezas: total };
-        })
-      );
-      setCampos(conResumen);
-      setCargando(false);
-    })();
-  }, []);
-
   const [sincronizando, setSincronizando] = useState(false);
   const [mensajeSync, setMensajeSync] = useState<string | null>(null);
 
-  async function handleSincronizar() {
-    setSincronizando(true);
-    setMensajeSync(null);
-    const resultado = await sincronizar(GRUPO_POR_DEFECTO_ID);
-    setMensajeSync(resultado.mensaje);
-    setSincronizando(false);
-    const lista = await listarCamposDeGrupo(GRUPO_POR_DEFECTO_ID);
+  async function cargarCampos() {
+    if (!usuario) return;
+    const lista = await listarCamposDeGrupo(usuario.grupoId);
     const conResumen = await Promise.all(
       lista.map(async (campo) => {
         const stock: Stock[] = await obtenerStockDeCampo(campo.id);
@@ -49,17 +30,54 @@ export default function ListaCampos() {
     );
     setCampos(conResumen);
   }
+
+  useEffect(() => {
+    cargarCampos().finally(() => setCargando(false));
+  }, []);
+
+  async function handleSincronizar() {
+    if (!usuario) return;
+    setSincronizando(true);
+    setMensajeSync(null);
+    const resultado = await sincronizar(usuario.grupoId);
+    setMensajeSync(resultado.mensaje);
+    setSincronizando(false);
+    if (!resultado.ok && resultado.mensaje.includes("sesión venció")) {
+      navigate("/login");
+      return;
+    }
+    await cargarCampos();
+  }
+
+  function handleLogout() {
+    logout();
+    navigate("/login");
+  }
+
   return (
     <div className="pantalla">
       <header className="encabezado">
         <h1>Mis campos</h1>
-        <Link to="/campos/nuevo" className="boton boton-primario">
-          + Nuevo campo
-        </Link>
-        <button className="boton boton-secundario" onClick={handleSincronizar} disabled={sincronizando}>
-          {sincronizando ? "Sincronizando..." : "Sincronizar"}
-        </button>
+        <div className="acciones-header">
+          <Link to="/campos/nuevo" className="boton boton-primario">
+            + Nuevo campo
+          </Link>
+          <button className="boton boton-secundario" onClick={handleSincronizar} disabled={sincronizando}>
+            {sincronizando ? "Sincronizando..." : "Sincronizar"}
+          </button>
+        </div>
       </header>
+
+      <div className="barra-usuario">
+        <span className="texto-mutado">{usuario?.nombre}</span>
+        <Link to="/cambiar-password" className="boton-link">
+          Cambiar contraseña
+        </Link>
+        <button className="boton-link" onClick={handleLogout}>
+          Cerrar sesión
+        </button>
+      </div>
+
       {mensajeSync && <p className="texto-mutado">{mensajeSync}</p>}
 
       {cargando && <p className="texto-mutado">Cargando...</p>}

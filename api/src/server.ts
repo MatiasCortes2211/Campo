@@ -1,12 +1,38 @@
 import "dotenv/config";
-import Fastify from "fastify";
+import Fastify, { FastifyRequest, FastifyReply } from "fastify";
 import cors from "@fastify/cors";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { hashPassword, verificarPassword, firmarToken, verificarToken, TokenPayload } from "./auth";
+
+declare module "fastify" {
+  interface FastifyRequest {
+    usuario?: TokenPayload;
+  }
+}
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 const app = Fastify({ logger: true });
+
+/**
+ * Exige un JWT válido en el header Authorization: Bearer <token>.
+ * Cuelga los datos del token en req.usuario para que las rutas los usen
+ * — el grupoId SIEMPRE sale de acá, nunca de lo que mande el cliente en
+ * el body o la query, así ningún usuario puede pedir/escribir datos de
+ * un grupo que no es el suyo.
+ */
+async function requireAuth(req: FastifyRequest, reply: FastifyReply) {
+  const header = req.headers.authorization;
+  if (!header?.startsWith("Bearer ")) {
+    return reply.code(401).send({ error: "Falta el token de autenticación." });
+  }
+  try {
+    req.usuario = verificarToken(header.slice("Bearer ".length));
+  } catch {
+    return reply.code(401).send({ error: "Token inválido o vencido." });
+  }
+}
 
 async function main() {
   await app.register(cors, { origin: true });
@@ -14,28 +40,93 @@ async function main() {
   app.get("/health", async () => ({ ok: true }));
 
   // ---------------------------------------------------------------
-  // GRUPOS (por ahora solo alta simple, sin auth — se suma después)
+  // AUTH
   // ---------------------------------------------------------------
-  app.post("/api/grupos", async (req, reply) => {
-    const body = req.body as { nombre: string };
-    const grupo = await prisma.grupoDeTrabajo.create({ data: { nombre: body.nombre } });
-    return reply.code(201).send(grupo);
+
+  app.post("/api/auth/login", async (req, reply) => {
+    const body = req.body as { email?: string; password?: string };
+    if (!body.email || !body.password) {
+      return reply.code(400).send({ error: "Faltan email y/o password." });
+    }
+
+    const usuario = await prisma.usuario.findUnique({ where: { email: body.email } });
+    if (!usuario) {
+      return reply.code(401).send({ error: "Email o contraseña incorrectos." });
+    }
+
+    const passwordOk = await verificarPassword(body.password, usuario.passwordHash);
+    if (!passwordOk) {
+      return reply.code(401).send({ error: "Email o contraseña incorrectos." });
+    }
+
+    const token = firmarToken({
+      usuarioId: usuario.id,
+      grupoId: usuario.grupoId,
+      rol: usuario.rol as "admin" | "colaborador",
+    });
+
+    return reply.send({
+      token,
+      usuario: { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol, grupoId: usuario.grupoId },
+    });
+  });
+
+  app.post("/api/auth/cambiar-password", { preHandler: requireAuth }, async (req, reply) => {
+    const body = req.body as { passwordActual?: string; passwordNueva?: string };
+    if (!body.passwordActual || !body.passwordNueva) {
+      return reply.code(400).send({ error: "Faltan passwordActual y/o passwordNueva." });
+    }
+    if (body.passwordNueva.length < 8) {
+      return reply.code(400).send({ error: "La contraseña nueva debe tener al menos 8 caracteres." });
+    }
+
+    const usuario = await prisma.usuario.findUnique({ where: { id: req.usuario!.usuarioId } });
+    if (!usuario) return reply.code(404).send({ error: "Usuario no encontrado." });
+
+    const actualOk = await verificarPassword(body.passwordActual, usuario.passwordHash);
+    if (!actualOk) {
+      return reply.code(401).send({ error: "La contraseña actual no coincide." });
+    }
+
+    const nuevoHash = await hashPassword(body.passwordNueva);
+    await prisma.usuario.update({ where: { id: usuario.id }, data: { passwordHash: nuevoHash } });
+
+    return reply.send({ ok: true });
   });
 
   // ---------------------------------------------------------------
-  // SYNC
-  //
-  // Modelo simple de dos operaciones:
-  // - PUSH: el cliente manda todo lo que cargó offline. Cada registro
-  //   se sube con upsert (create si no existe, update si ya existe),
-  //   así el mismo endpoint sirve para altas y ediciones, y es seguro
-  //   reintentar un push que falló a mitad de camino.
-  // - PULL: el cliente pide "todo lo que cambió después de tal fecha"
-  //   para un grupo, para traer a otros dispositivos lo que se cargó
-  //   en el campo (o viceversa).
+  // USUARIOS (alta de colaboradores dentro del propio grupo — solo admin)
   // ---------------------------------------------------------------
 
-  app.post("/api/sync/push", async (req, reply) => {
+  app.post("/api/usuarios", { preHandler: requireAuth }, async (req, reply) => {
+    if (req.usuario!.rol !== "admin") {
+      return reply.code(403).send({ error: "Solo un admin puede crear usuarios." });
+    }
+    const body = req.body as { nombre?: string; email?: string; password?: string };
+    if (!body.nombre || !body.email || !body.password) {
+      return reply.code(400).send({ error: "Faltan nombre, email y/o password." });
+    }
+
+    const passwordHash = await hashPassword(body.password);
+    const nuevo = await prisma.usuario.create({
+      data: {
+        nombre: body.nombre,
+        email: body.email,
+        passwordHash,
+        rol: "colaborador",
+        grupoId: req.usuario!.grupoId,
+      },
+    });
+
+    return reply.code(201).send({ id: nuevo.id, nombre: nuevo.nombre, email: nuevo.email });
+  });
+
+  // ---------------------------------------------------------------
+  // SYNC (protegido — el grupoId sale siempre del token, nunca del cliente)
+  // ---------------------------------------------------------------
+
+  app.post("/api/sync/push", { preHandler: requireAuth }, async (req, reply) => {
+    const grupoId = req.usuario!.grupoId;
     const body = req.body as {
       campos?: any[];
       ocupantes?: any[];
@@ -44,15 +135,20 @@ async function main() {
       eventoDetalles?: any[];
     };
 
+    // Los campos que llegan del cliente se filtran/forzán a este grupoId,
+    // por si alguien manipulara el payload a mano — nunca confiamos en
+    // el grupoId que venga en el body.
+    const campos = (body.campos ?? []).map((c) => ({ ...c, grupoId }));
+
     const resultado = await prisma.$transaction(async (tx) => {
-      const campos = [];
-      for (const c of body.campos ?? []) {
-        campos.push(
+      const camposGuardados = [];
+      for (const c of campos) {
+        camposGuardados.push(
           await tx.campo.upsert({
             where: { id: c.id },
             create: {
               id: c.id,
-              grupoId: c.grupoId,
+              grupoId,
               nombre: c.nombre,
               ubicacion: c.ubicacion,
               hectareas: c.hectareas,
@@ -68,8 +164,14 @@ async function main() {
         );
       }
 
+      // Para ocupantes/stock/eventos, verificamos que el campoId que
+      // mandan pertenezca efectivamente a este grupo antes de guardar.
+      const camposDelGrupo = await tx.campo.findMany({ where: { grupoId }, select: { id: true } });
+      const idsValidos = new Set(camposDelGrupo.map((c) => c.id));
+
       const ocupantes = [];
       for (const o of body.ocupantes ?? []) {
+        if (!idsValidos.has(o.campoId)) continue;
         ocupantes.push(
           await tx.ocupante.upsert({
             where: { id: o.id },
@@ -99,6 +201,7 @@ async function main() {
 
       const stock = [];
       for (const s of body.stock ?? []) {
+        if (!idsValidos.has(s.campoId)) continue;
         stock.push(
           await tx.stock.upsert({
             where: { id: s.id },
@@ -121,6 +224,7 @@ async function main() {
 
       const eventos = [];
       for (const e of body.eventos ?? []) {
+        if (!idsValidos.has(e.campoId)) continue;
         eventos.push(
           await tx.evento.upsert({
             where: { id: e.id },
@@ -158,7 +262,7 @@ async function main() {
         );
       }
 
-      return { campos, ocupantes, stock, eventos, eventoDetalles };
+      return { campos: camposGuardados, ocupantes, stock, eventos, eventoDetalles };
     });
 
     return reply.send({
@@ -173,21 +277,17 @@ async function main() {
     });
   });
 
-  app.get("/api/sync/pull", async (req, reply) => {
-    const query = req.query as { grupoId?: string; since?: string };
-    if (!query.grupoId) {
-      return reply.code(400).send({ error: "Falta el parámetro grupoId" });
-    }
+  app.get("/api/sync/pull", { preHandler: requireAuth }, async (req, reply) => {
+    const grupoId = req.usuario!.grupoId;
+    const query = req.query as { since?: string };
     const since = query.since ? new Date(query.since) : new Date(0);
 
-    const campos = await prisma.campo.findMany({
-      where: { grupoId: query.grupoId, updatedAt: { gt: since } },
+    const campos = await prisma.campo.findMany({ where: { grupoId, updatedAt: { gt: since } } });
+    const todosLosCamposDelGrupo = await prisma.campo.findMany({
+      where: { grupoId },
+      select: { id: true },
     });
-    const campoIds = campos.length
-      ? campos.map((c) => c.id)
-      : (
-          await prisma.campo.findMany({ where: { grupoId: query.grupoId }, select: { id: true } })
-        ).map((c) => c.id);
+    const campoIds = todosLosCamposDelGrupo.map((c) => c.id);
 
     const [ocupantes, stock, eventos] = await Promise.all([
       prisma.ocupante.findMany({ where: { campoId: { in: campoIds }, updatedAt: { gt: since } } }),

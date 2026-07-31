@@ -36,3 +36,15 @@
   font-weight: 700;
   color: var(--color-acento);
 }
+
+.acciones-header {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.barra-usuario {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}

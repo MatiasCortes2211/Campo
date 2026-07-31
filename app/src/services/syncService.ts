@@ -1,4 +1,5 @@
 import { db } from "../db/database";
+import { getToken, logout } from "./authService";
 
 const API_URL = import.meta.env.VITE_API_URL as string;
 const LAST_SYNC_KEY = "campo-app:lastSync";
@@ -11,40 +12,45 @@ function setLastSync(iso: string) {
   localStorage.setItem(LAST_SYNC_KEY, iso);
 }
 
+function authHeaders(): HeadersInit {
+  return { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` };
+}
+
 export interface ResultadoSync {
   ok: boolean;
   mensaje: string;
 }
 
-/**
- * Sube todo lo que se cargó offline (campos, ocupantes, eventos + sus
- * detalles, y el stock completo) y después baja lo que haya cambiado
- * en el servidor desde la última sincronización. Pensado para correr
- * cuando el dispositivo recupera señal — no asume que hay conexión.
- */
 export async function sincronizar(grupoId: string): Promise<ResultadoSync> {
   if (!navigator.onLine) {
     return { ok: false, mensaje: "Sin conexión — no se puede sincronizar ahora." };
   }
+  if (!getToken()) {
+    return { ok: false, mensaje: "Sesión no iniciada." };
+  }
 
   try {
     await push(grupoId);
-    await pull(grupoId);
+    await pull();
     return { ok: true, mensaje: "Sincronizado correctamente." };
   } catch (err) {
+    if (err instanceof Error && err.message === "SESION_VENCIDA") {
+      logout();
+      return { ok: false, mensaje: "Tu sesión venció. Iniciá sesión de nuevo." };
+    }
     console.error("Error de sync:", err);
     return { ok: false, mensaje: "Falló la sincronización. Se reintenta la próxima vez." };
   }
 }
 
+function chequearRespuesta(res: Response) {
+  if (res.status === 401) throw new Error("SESION_VENCIDA");
+  if (!res.ok) throw new Error(`request falló: ${res.status}`);
+}
+
 async function push(grupoId: string) {
-  // Los Campos son una tabla chica (pocas filas por grupo) — se mandan
-  // siempre completos, igual que el Stock. Esto garantiza que cualquier
-  // Ocupante/Stock/Evento que dependa de un campoId nunca choque contra
-  // una foreign key, sin importar si ese Campo ya se había marcado como
-  // sincronizado en una corrida anterior.
   const campos = await db.campos.where("grupoId").equals(grupoId).toArray();
-  const campoIds = (await db.campos.where("grupoId").equals(grupoId).toArray()).map((c) => c.id);
+  const campoIds = campos.map((c) => c.id);
 
   const ocupantes = await db.ocupantes
     .where("campoId")
@@ -63,28 +69,19 @@ async function push(grupoId: string) {
     ? await db.eventoDetalles.where("eventoId").anyOf(eventoIds).toArray()
     : [];
 
-  // El stock se manda completo (es una tabla chica: pocas filas por
-  // campo), no hace falta trackear "sincronizado" ahí.
   const stock = campoIds.length ? await db.stock.where("campoId").anyOf(campoIds).toArray() : [];
 
-  if (
-    campos.length === 0 &&
-    ocupantes.length === 0 &&
-    eventos.length === 0 &&
-    stock.length === 0
-  ) {
-    return; // nada pendiente para subir
+  if (campos.length === 0 && ocupantes.length === 0 && eventos.length === 0 && stock.length === 0) {
+    return;
   }
 
   const res = await fetch(`${API_URL}/api/sync/push`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: authHeaders(),
     body: JSON.stringify({ campos, ocupantes, stock, eventos, eventoDetalles }),
   });
+  chequearRespuesta(res);
 
-  if (!res.ok) throw new Error(`push falló: ${res.status}`);
-
-  // Marcar como sincronizado localmente lo que se subió con éxito.
   await db.transaction("rw", db.campos, db.ocupantes, db.eventos, async () => {
     for (const c of campos) await db.campos.update(c.id, { sincronizado: true });
     for (const o of ocupantes) await db.ocupantes.update(o.id, { sincronizado: true });
@@ -92,12 +89,12 @@ async function push(grupoId: string) {
   });
 }
 
-async function pull(grupoId: string) {
+async function pull() {
   const since = getLastSync();
-  const res = await fetch(
-    `${API_URL}/api/sync/pull?grupoId=${grupoId}&since=${encodeURIComponent(since)}`
-  );
-  if (!res.ok) throw new Error(`pull falló: ${res.status}`);
+  const res = await fetch(`${API_URL}/api/sync/pull?since=${encodeURIComponent(since)}`, {
+    headers: authHeaders(),
+  });
+  chequearRespuesta(res);
 
   const data = await res.json();
 

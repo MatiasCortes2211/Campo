@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { crearCampo } from "../services/campoService";
-import { GRUPO_POR_DEFECTO_ID } from "../db/seed";
+import { getUsuarioActual } from "../services/authService";
 import "./ListaCampos.css";
 
 export default function NuevoCampo() {
@@ -16,7 +16,7 @@ export default function NuevoCampo() {
     e.preventDefault();
     setGuardando(true);
     const campo = await crearCampo({
-      grupoId: GRUPO_POR_DEFECTO_ID,
+      grupoId: getUsuarioActual()!.grupoId,
       nombre,
       ubicacion,
       hectareas: Number(hectareas) || 0,

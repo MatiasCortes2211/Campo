@@ -43,13 +43,20 @@ model GrupoDeTrabajo {
   campos    Campo[]
 }
 
+enum RolUsuario {
+  admin
+  colaborador
+}
+
 model Usuario {
-  id        String         @id @default(cuid())
-  nombre    String
-  email     String         @unique
-  grupoId   String
-  grupo     GrupoDeTrabajo @relation(fields: [grupoId], references: [id])
-  createdAt DateTime       @default(now())
+  id           String         @id @default(cuid())
+  nombre       String
+  email        String         @unique
+  passwordHash String
+  rol          RolUsuario     @default(admin)
+  grupoId      String
+  grupo        GrupoDeTrabajo @relation(fields: [grupoId], references: [id])
+  createdAt    DateTime       @default(now())
 }
 
 model Campo {
