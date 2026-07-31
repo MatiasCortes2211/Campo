@@ -54,3 +54,10 @@ export async function listarCamposDeGrupo(grupoId: string): Promise<Campo[]> {
 export async function obtenerStockDeCampo(campoId: string) {
   return db.stock.where("campoId").equals(campoId).toArray();
 }
+
+export async function editarCampo(
+  campoId: string,
+  cambios: Partial<Pick<Campo, "nombre" | "ubicacion" | "hectareas" | "renspa">>
+): Promise<void> {
+  await db.campos.update(campoId, { ...cambios, updatedAt: new Date().toISOString(), sincronizado: false });
+}

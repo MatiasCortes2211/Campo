@@ -47,3 +47,16 @@ export async function cambiarPassword(passwordActual: string, passwordNueva: str
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error ?? "No se pudo cambiar la contraseña.");
 }
+
+export async function actualizarNombre(nombre: string): Promise<UsuarioActual> {
+  const res = await fetch(`${API_URL}/api/auth/actualizar-perfil`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
+    body: JSON.stringify({ nombre }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error ?? "No se pudo actualizar el nombre.");
+
+  localStorage.setItem(USUARIO_KEY, JSON.stringify(data));
+  return data;
+}

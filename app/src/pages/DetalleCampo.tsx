@@ -14,6 +14,7 @@ import OcupanteForm from "../components/OcupanteForm";
 import Calculadora from "../components/Calculadora";
 import "./DetalleCampo.css";
 import { formatearFecha } from "../utils/fecha";
+import EditarCampoForm from "../components/EditarCampoForm";
 
 export default function DetalleCampo() {
   const { campoId } = useParams<{ campoId: string }>();
@@ -26,6 +27,7 @@ export default function DetalleCampo() {
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [mostrarFormularioOcupante, setMostrarFormularioOcupante] = useState(false);
   const [periodoEnEdicion, setPeriodoEnEdicion] = useState<Ocupante | null>(null);
+  const [mostrarFormularioCampo, setMostrarFormularioCampo] = useState(false);
 
   const cargarTodo = useCallback(async () => {
     if (!campoId) return;
@@ -102,7 +104,12 @@ export default function DetalleCampo() {
 
       <header className="encabezado-detalle">
         <div>
-          <h1>{campo.nombre}</h1>
+          <div className="titulo-con-editar">
+            <h1>{campo.nombre}</h1>
+            <button className="boton-link" onClick={() => setMostrarFormularioCampo(true)}>
+              Editar
+            </button>
+          </div>
           <p className="texto-mutado">
             {campo.ubicacion} · {campo.hectareas} ha · RENSPA {campo.renspa || "sin cargar"}
           </p>
@@ -252,6 +259,17 @@ export default function DetalleCampo() {
             setMostrarFormularioOcupante(false);
             setPeriodoEnEdicion(null);
           }}
+        />
+      )}
+
+      {mostrarFormularioCampo && (
+        <EditarCampoForm
+          campo={campo}
+          onGuardado={() => {
+            setMostrarFormularioCampo(false);
+            cargarTodo();
+          }}
+          onCancelar={() => setMostrarFormularioCampo(false)}
         />
       )}
     </div>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { crearCampo } from "../services/campoService";
+import BuscadorUbicacion from "../components/BuscadorUbicacion";
 import { getUsuarioActual } from "../services/authService";
 import "./ListaCampos.css";
 
@@ -38,7 +39,7 @@ export default function NuevoCampo() {
         </label>
         <label>
           Ubicación
-          <input value={ubicacion} onChange={(e) => setUbicacion(e.target.value)} />
+          <BuscadorUbicacion value={ubicacion} onChange={setUbicacion} />
         </label>
         <label>
           Hectáreas

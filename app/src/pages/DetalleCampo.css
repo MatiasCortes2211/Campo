@@ -53,20 +53,6 @@
   margin-bottom: 1rem;
 }
 
-.boton-link {
-  background: none;
-  border: none;
-  color: var(--color-acento);
-  font-weight: 600;
-  font-size: 0.85rem;
-  padding: 0;
-  text-decoration: underline;
-}
-
-.boton-link-peligro {
-  color: var(--color-alerta);
-}
-
 .lista-historial {
   list-style: none;
   padding: 0;
@@ -108,16 +94,6 @@
   font-weight: 700;
 }
 
-.boton-anular {
-  margin-left: auto;
-  background: none;
-  border: 1px solid var(--color-alerta);
-  color: var(--color-alerta);
-  border-radius: 6px;
-  padding: 0.15rem 0.5rem;
-  font-size: 0.75rem;
-}
-
 .evento-lineas {
   margin-top: 0.4rem;
   display: flex;
@@ -138,4 +114,56 @@
   font-size: 0.85rem;
   color: var(--color-texto-mutado);
   font-style: italic;
+}
+
+.titulo-con-editar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.titulo-con-editar h1 {
+  margin: 0;
+}
+
+.boton-link {
+  background: none;
+  border: none;
+  color: var(--color-acento);
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 0.3rem 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.boton-link:hover {
+  background: var(--color-acento-claro);
+  text-decoration: none;
+}
+
+.boton-link-peligro {
+  color: var(--color-alerta);
+}
+
+.boton-link-peligro:hover {
+  background: #fbe9e4;
+}
+
+.boton-anular {
+  margin-left: auto;
+  background: none;
+  border: 1px solid var(--color-alerta);
+  color: var(--color-alerta);
+  border-radius: 6px;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.boton-anular:hover {
+  background: #fbe9e4;
 }

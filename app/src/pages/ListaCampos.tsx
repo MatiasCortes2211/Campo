@@ -49,11 +49,6 @@ export default function ListaCampos() {
     await cargarCampos();
   }
 
-  function handleLogout() {
-    logout();
-    navigate("/login");
-  }
-
   return (
     <div className="pantalla">
       <header className="encabezado">
@@ -67,16 +62,6 @@ export default function ListaCampos() {
           </button>
         </div>
       </header>
-
-      <div className="barra-usuario">
-        <span className="texto-mutado">{usuario?.nombre}</span>
-        <Link to="/cambiar-password" className="boton-link">
-          Cambiar contraseña
-        </Link>
-        <button className="boton-link" onClick={handleLogout}>
-          Cerrar sesión
-        </button>
-      </div>
 
       {mensajeSync && <p className="texto-mutado">{mensajeSync}</p>}
 

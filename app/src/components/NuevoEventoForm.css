@@ -65,7 +65,16 @@
   background: none;
   border: none;
   color: var(--color-alerta);
-  font-size: 1rem;
+  font-size: 1.1rem;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.boton-quitar:hover {
+  background: #fbe9e4;
 }
 
 .acciones-modal {

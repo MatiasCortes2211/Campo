@@ -8,6 +8,7 @@ import NuevoCampo from "./pages/NuevoCampo";
 import Login from "./pages/Login";
 import CambiarPassword from "./pages/CambiarPassword";
 import RequireAuth from "./components/RequireAuth";
+import Layout from "./components/Layout";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -15,37 +16,17 @@ createRoot(document.getElementById("root")!).render(
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route
-          path="/"
           element={
             <RequireAuth>
-              <ListaCampos />
+              <Layout />
             </RequireAuth>
           }
-        />
-        <Route
-          path="/campos/nuevo"
-          element={
-            <RequireAuth>
-              <NuevoCampo />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/campos/:campoId"
-          element={
-            <RequireAuth>
-              <DetalleCampo />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/cambiar-password"
-          element={
-            <RequireAuth>
-              <CambiarPassword />
-            </RequireAuth>
-          }
-        />
+        >
+          <Route path="/" element={<ListaCampos />} />
+          <Route path="/campos/nuevo" element={<NuevoCampo />} />
+          <Route path="/campos/:campoId" element={<DetalleCampo />} />
+          <Route path="/cambiar-password" element={<CambiarPassword />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   </StrictMode>

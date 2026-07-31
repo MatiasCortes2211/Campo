@@ -65,13 +65,55 @@ a {
 }
 
 .boton {
-  display: inline-block;
-  padding: 0.55rem 1rem;
-  border-radius: 8px;
-  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.65rem 1.1rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
   font-weight: 600;
-  text-decoration: none;
   font-size: 0.95rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.08s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.boton:active {
+  transform: scale(0.97);
+}
+
+.boton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.boton-primario {
+  background: var(--color-acento);
+  color: white;
+  box-shadow: 0 1px 2px rgba(43, 43, 35, 0.15);
+}
+
+.boton-primario:hover:not(:disabled) {
+  background: #3d4d2f;
+  box-shadow: 0 2px 6px rgba(43, 43, 35, 0.2);
+}
+
+.boton-secundario {
+  background: var(--color-acento-claro);
+  color: var(--color-acento);
+  border-color: transparent;
+}
+
+.boton-secundario:hover:not(:disabled) {
+  background: #d5deC5;
+}
+
+.boton:focus-visible {
+  outline: 2px solid var(--color-acento);
+  outline-offset: 2px;
 }
 
 .boton-primario {

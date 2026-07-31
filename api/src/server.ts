@@ -94,6 +94,26 @@ async function main() {
     return reply.send({ ok: true });
   });
 
+  app.post("/api/auth/actualizar-perfil", { preHandler: requireAuth }, async (req, reply) => {
+    const body = req.body as { nombre?: string };
+    if (!body.nombre || body.nombre.trim().length === 0) {
+      return reply.code(400).send({ error: "Falta el nombre." });
+    }
+
+    const usuario = await prisma.usuario.update({
+      where: { id: req.usuario!.usuarioId },
+      data: { nombre: body.nombre.trim() },
+    });
+
+    return reply.send({
+      id: usuario.id,
+      nombre: usuario.nombre,
+      email: usuario.email,
+      rol: usuario.rol,
+      grupoId: usuario.grupoId,
+    });
+  });
+
   // ---------------------------------------------------------------
   // USUARIOS (alta de colaboradores dentro del propio grupo — solo admin)
   // ---------------------------------------------------------------
