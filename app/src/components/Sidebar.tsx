@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { NavLink, Link, useNavigate, useLocation } from "react-router-dom";
 import { listarCamposDeGrupo } from "../services/campoService";
-import { getUsuarioActual, logout } from "../services/authService";
+import { getUsuarioActual, logout, type UsuarioActual } from "../services/authService";
+import { actualizarNombrePropioEnTodosLosCampos } from "../services/ocupanteService";
 import type { Campo } from "../types/domain";
 import EditarNombreForm from "./EditarNombreForm";
 import "./Sidebar.css";
@@ -14,7 +15,7 @@ interface Props {
 export default function Sidebar({ abierto, onCerrar }: Props) {
   const navigate = useNavigate();
   const location = useLocation();
-  const usuario = getUsuarioActual();
+  const [usuario, setUsuario] = useState<UsuarioActual | null>(() => getUsuarioActual());
   const [campos, setCampos] = useState<Campo[]>([]);
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [editandoNombre, setEditandoNombre] = useState(false);
@@ -39,7 +40,18 @@ export default function Sidebar({ abierto, onCerrar }: Props) {
         </div>
 
         <nav className="sidebar-nav">
-          <p className="sidebar-seccion-titulo">Mis campos</p>
+            <NavLink
+                to="/"
+                end
+                className={({ isActive }) => `sidebar-link sidebar-link-inicio ${isActive ? "sidebar-link-activo" : ""}`}
+                onClick={onCerrar}
+            >
+                <span className="sidebar-link-icono">🏠</span>
+                <span className="sidebar-link-texto">
+                <span className="sidebar-link-nombre">Todos los campos</span>
+                </span>
+            </NavLink>
+            <p className="sidebar-seccion-titulo">Mis campos</p>
           {campos.map((c) => (
             <NavLink
               key={c.id}
@@ -94,9 +106,13 @@ export default function Sidebar({ abierto, onCerrar }: Props) {
 
       {editandoNombre && usuario && (
         <EditarNombreForm
-          nombreActual={usuario.nombre}
-          onGuardado={() => setEditandoNombre(false)}
-          onCancelar={() => setEditandoNombre(false)}
+            nombreActual={usuario.nombre}
+            onGuardado={async (usuarioActualizado) => {
+            await actualizarNombrePropioEnTodosLosCampos(usuario.grupoId, usuario.nombre, usuarioActualizado.nombre);
+            setUsuario(usuarioActualizado);
+            setEditandoNombre(false);
+            }}
+            onCancelar={() => setEditandoNombre(false)}
         />
       )}
     </>

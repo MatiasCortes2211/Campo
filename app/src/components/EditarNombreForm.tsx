@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { actualizarNombre } from "../services/authService";
 import "./NuevoEventoForm.css";
+import type { UsuarioActual } from "../services/authService";
 
 interface Props {
   nombreActual: string;
-  onGuardado: () => void;
+  onGuardado: (usuarioActualizado: UsuarioActual) => void;
   onCancelar: () => void;
 }
 
@@ -18,8 +19,8 @@ export default function EditarNombreForm({ nombreActual, onGuardado, onCancelar 
     setError(null);
     setGuardando(true);
     try {
-      await actualizarNombre(nombre);
-      onGuardado();
+      const actualizado = await actualizarNombre(nombre);
+      onGuardado(actualizado);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al actualizar el nombre.");
     } finally {

@@ -1,3 +1,4 @@
+import "./instrumentation";
 import "dotenv/config";
 import Fastify, { FastifyRequest, FastifyReply } from "fastify";
 import cors from "@fastify/cors";
@@ -13,7 +14,13 @@ declare module "fastify" {
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
-const app = Fastify({ logger: true });
+const app = Fastify({
+  logger: {
+    transport: {
+      target: "pino-opentelemetry-transport",
+    },
+  },
+});
 
 /**
  * Exige un JWT válido en el header Authorization: Bearer <token>.

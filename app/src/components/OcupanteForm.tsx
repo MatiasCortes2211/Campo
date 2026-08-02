@@ -1,12 +1,11 @@
 import { useState } from "react";
 import type { Ocupante, TipoOcupante } from "../types/domain";
 import { crearOcupante, editarOcupante, haySolapamiento, hoyISO } from "../services/ocupanteService";
+import { getUsuarioActual } from "../services/authService";
 import "../components/NuevoEventoForm.css";
 
 interface Props {
   campoId: string;
-  // Si se pasa, el formulario edita ese período puntual (fechas incluidas).
-  // Si no, da de alta un período nuevo.
   periodoAEditar?: Ocupante | null;
   onGuardado: () => void;
   onCancelar: () => void;
@@ -14,9 +13,12 @@ interface Props {
 
 export default function OcupanteForm({ campoId, periodoAEditar, onGuardado, onCancelar }: Props) {
   const modoEdicion = !!periodoAEditar;
+  const usuarioActual = getUsuarioActual();
 
   const [tipo, setTipo] = useState<TipoOcupante>(periodoAEditar?.tipo ?? "propio");
-  const [nombre, setNombre] = useState(periodoAEditar?.nombre ?? "");
+  const [nombre, setNombre] = useState(
+    periodoAEditar?.nombre ?? (tipo === "propio" ? usuarioActual?.nombre ?? "" : "")
+  );
   const [contacto, setContacto] = useState(periodoAEditar?.contacto ?? "");
   const [cuit, setCuit] = useState(periodoAEditar?.cuit ?? "");
   const [comentario, setComentario] = useState(periodoAEditar?.comentario ?? "");
@@ -24,6 +26,20 @@ export default function OcupanteForm({ campoId, periodoAEditar, onGuardado, onCa
   const [hasta, setHasta] = useState(periodoAEditar?.fechaFin?.slice(0, 10) ?? "");
   const [error, setError] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
+
+  function handleTipoChange(nuevoTipo: TipoOcupante) {
+    setTipo(nuevoTipo);
+    if (nuevoTipo === "propio") {
+      // Se carga el nombre del perfil automáticamente — el usuario
+      // igual puede editarlo después si quiere poner otro nombre
+      // (por ejemplo, un familiar que también explota el campo).
+      setNombre(usuarioActual?.nombre ?? "");
+    } else if (tipo === "propio" && nuevoTipo === "alquilado") {
+      // Al pasar a alquilado, se limpia para que carguen el nombre
+      // real del inquilino en vez de dejar el nombre propio puesto.
+      setNombre("");
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -83,7 +99,7 @@ export default function OcupanteForm({ campoId, periodoAEditar, onGuardado, onCa
 
         <label>
           Tipo
-          <select value={tipo} onChange={(e) => setTipo(e.target.value as TipoOcupante)}>
+          <select value={tipo} onChange={(e) => handleTipoChange(e.target.value as TipoOcupante)}>
             <option value="propio">Propio (lo trabajamos nosotros)</option>
             <option value="alquilado">Alquilado a un tercero</option>
           </select>

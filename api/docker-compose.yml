@@ -11,5 +11,13 @@ services:
     volumes:
       - campo_db_data:/var/lib/postgresql/data
 
+  observabilidad:
+    image: grafana/otel-lgtm
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+      - "4317:4317"
+      - "4318:4318"
+
 volumes:
   campo_db_data:

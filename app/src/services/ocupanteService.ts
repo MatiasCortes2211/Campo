@@ -90,3 +90,30 @@ export async function obtenerOcupanteDeHoy(campoId: string): Promise<Ocupante | 
   // Si ninguno está abierto, nos quedamos con el que empezó más reciente.
   return candidatos.sort((a, b) => (a.fechaInicio < b.fechaInicio ? 1 : -1))[0];
 }
+
+/**
+ * Cuando el usuario cambia su nombre de perfil, los períodos "Propio"
+ * que tenían copiado el nombre viejo se actualizan al nuevo — pero solo
+ * esos (coincidencia exacta con el nombre anterior). Si alguien puso un
+ * nombre distinto a mano (ej. un familiar), no se toca.
+ */
+export async function actualizarNombrePropioEnTodosLosCampos(
+  grupoId: string,
+  nombreAnterior: string,
+  nombreNuevo: string
+): Promise<void> {
+  if (nombreAnterior === nombreNuevo) return;
+
+  const campos = await db.campos.where("grupoId").equals(grupoId).toArray();
+  const campoIds = campos.map((c) => c.id);
+  if (campoIds.length === 0) return;
+
+  const periodos = await db.ocupantes.where("campoId").anyOf(campoIds).toArray();
+  const aActualizar = periodos.filter((p) => p.tipo === "propio" && p.nombre === nombreAnterior);
+
+  await db.transaction("rw", db.ocupantes, async () => {
+    for (const p of aActualizar) {
+      await db.ocupantes.update(p.id, { nombre: nombreNuevo, sincronizado: false });
+    }
+  });
+}

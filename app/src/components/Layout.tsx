@@ -8,8 +8,12 @@ export default function Layout() {
 
   return (
     <div className="app-shell">
-      <button className="boton-hamburguesa" onClick={() => setSidebarAbierta(true)} aria-label="Abrir menú">
-        ☰
+      <button
+        className="boton-hamburguesa"
+        onClick={() => setSidebarAbierta((v) => !v)}
+        aria-label={sidebarAbierta ? "Cerrar menú" : "Abrir menú"}
+      >
+        {sidebarAbierta ? "✕" : "☰"}
       </button>
       <Sidebar abierto={sidebarAbierta} onCerrar={() => setSidebarAbierta(false)} />
       {sidebarAbierta && <div className="sidebar-overlay" onClick={() => setSidebarAbierta(false)} />}
